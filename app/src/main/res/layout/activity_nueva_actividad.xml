@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingTop="48dp"
+        android:paddingBottom="48dp">
+
+
+
+    <!-- Título de pantalla -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nueva actividad"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#111111"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Campo: Título -->
+        <EditText
+            android:id="@+id/etTitulo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Título de la actividad"
+            android:background="@null"
+            android:textColor="#000000"
+            android:textColorHint="#888888"
+            android:textSize="16sp"
+            android:inputType="text"
+            android:layout_marginBottom="24dp"
+            android:paddingBottom="8dp"
+            android:drawableBottom="@drawable/underline" />
+
+        <!-- Campo: Descripción -->
+        <EditText
+            android:id="@+id/etDescripcion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Descripción o detalles"
+            android:background="@null"
+            android:textColor="#000000"
+            android:textColorHint="#888888"
+            android:textSize="16sp"
+            android:inputType="text"
+            android:layout_marginBottom="24dp"
+            android:paddingBottom="8dp"
+            android:drawableBottom="@drawable/underline" />
+
+        <!-- Campo: Fecha -->
+        <EditText
+            android:id="@+id/etFecha"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Fecha (Ej. Mañana, Viernes 15:00)"
+            android:background="@null"
+            android:textColor="#000000"
+            android:textColorHint="#888888"
+            android:textSize="16sp"
+            android:inputType="text"
+            android:layout_marginBottom="32dp"
+            android:paddingBottom="8dp"
+            android:drawableBottom="@drawable/underline" />
+
+        <!-- Botón Guardar -->
+        <Button
+            android:id="@+id/btnGuardar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Guardar actividad"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#937BFF"
+            android:textStyle="bold"
+            android:padding="12dp"
+            android:elevation="2dp"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnVolver"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Volver al inicio"
+            android:textColor="#6200EE"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:backgroundTint="#EEEEEE"
+            android:padding="12dp"
+            android:elevation="2dp"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+</ScrollView>
