@@ -1,10 +1,14 @@
 package com.example.classorganizer
 
-
-import android.app.*
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import java.text.SimpleDateFormat
 import java.util.*
 
 class NuevaActividadActivity : Activity() {
@@ -46,6 +50,19 @@ class NuevaActividadActivity : Activity() {
                 return@setOnClickListener
             }
 
+            // Guardar la actividad en SharedPreferences
+            val sharedPreferences = getSharedPreferences("actividades", MODE_PRIVATE)
+            val editor = sharedPreferences.edit()
+
+            // Usamos el título como clave única para cada actividad
+            val actividad = "$titulo|$descripcion|$fecha"
+            val lista = sharedPreferences.getStringSet("lista", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+            lista.add(actividad)
+
+            editor.putStringSet("lista", lista)
+            editor.apply()
+
+            // Enviar los datos de vuelta a MainActivity
             val intent = Intent()
             intent.putExtra("titulo", titulo)
             intent.putExtra("descripcion", descripcion)
@@ -88,4 +105,3 @@ class NuevaActividadActivity : Activity() {
         datePicker.show()
     }
 }
-

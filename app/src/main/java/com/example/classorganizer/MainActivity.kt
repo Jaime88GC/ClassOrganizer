@@ -1,14 +1,22 @@
 package com.example.classorganizer
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.app.AlertDialog
+import android.widget.Toast
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -20,9 +28,33 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Crear canal de notificación para Android 8.0 y versiones superiores
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channelId = "channel_id"  // Identificador único del canal
+            val channelName = "Tareas"    // Nombre del canal de notificación
+            val importance = NotificationManager.IMPORTANCE_DEFAULT  // Prioridad de la notificación
+            val channel = NotificationChannel(channelId, channelName, importance)
+
+            // Crear el canal de notificación
+            val notificationManager: NotificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        // Solicitar el permiso de notificación para Android 13 o superior
+        val permission = android.Manifest.permission.POST_NOTIFICATIONS
+        val permissionStatus = ContextCompat.checkSelfPermission(this, permission)
+
+        if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
+            // Si no tiene permiso, solicita permiso
+            ActivityCompat.requestPermissions(this, arrayOf(permission), 1)
+        }
+
         contenedorActividades = findViewById(R.id.contenedorActividades)
         val btnCrearActividad = findViewById<ImageButton>(R.id.btnNuevaActividad)
         val btnBuscar = findViewById<ImageView>(R.id.btnBuscar)
+
+        // Llamar a cargar actividades guardadas cuando se inicia la app
+        cargarActividadesGuardadas()
 
         btnCrearActividad.setOnClickListener {
             val intent = Intent(this, NuevaActividadActivity::class.java)
@@ -33,8 +65,20 @@ class MainActivity : Activity() {
             val intent = Intent(this, BuscarActividadActivity::class.java)
             startActivity(intent)
         }
+    }
 
-        cargarActividadesGuardadas()
+    // Este método maneja la respuesta del permiso de notificación
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permiso concedido, puedes enviar notificaciones
+                enviarNotificacion("Título", "Mensaje de notificación")
+            } else {
+                // Permiso denegado, maneja el caso
+                Toast.makeText(this, "El permiso para mostrar notificaciones es necesario", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -45,13 +89,19 @@ class MainActivity : Activity() {
             val descripcion = data.getStringExtra("descripcion") ?: ""
             val fechaHora = data.getStringExtra("fecha") ?: ""
 
+            // Actualizamos la lista de actividades después de agregar una nueva actividad
             agregarActividadEnPantalla(titulo, descripcion, fechaHora)
 
+            // Guardar la actividad en SharedPreferences
+            val sharedPreferences = getSharedPreferences("actividades", MODE_PRIVATE)
+            val editor = sharedPreferences.edit()
+
             val actividad = "$titulo|$descripcion|$fechaHora"
-            val prefs = getSharedPreferences("actividades", MODE_PRIVATE)
-            val lista = prefs.getStringSet("lista", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
+            val lista = sharedPreferences.getStringSet("lista", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
             lista.add(actividad)
-            prefs.edit().putStringSet("lista", lista).apply()
+
+            editor.putStringSet("lista", lista)
+            editor.apply()
         }
     }
 
@@ -65,8 +115,14 @@ class MainActivity : Activity() {
             val fechaActividad = formato.parse(fechaHoraStr)
             val diferencia = fechaActividad.time - ahora.time
             colorFondo = when {
-                diferencia <= 0 -> Color.parseColor("#EF9A9A")
-                diferencia <= 2 * 60 * 60 * 1000 -> Color.parseColor("#FFF59D")
+                diferencia <= 0 -> { // Rojo: La actividad ya ha pasado
+                    enviarNotificacion("¡Actividad vencida!", "La actividad '$titulo' ha vencido.")
+                    Color.parseColor("#EF9A9A")
+                }
+                diferencia <= 2 * 60 * 60 * 1000 -> { // Amarillo: Menos de 2 horas
+                    enviarNotificacion("¡Actividad urgente!", "Te queda poco tiempo para hacer la actividad '$titulo'.")
+                    Color.parseColor("#FFF59D")
+                }
                 else -> Color.parseColor("#A5D6A7")
             }
         } catch (e: Exception) {
@@ -136,4 +192,20 @@ class MainActivity : Activity() {
             }
         }
     }
+
+    private fun enviarNotificacion(titulo: String, mensaje: String) {
+        // Generar un ID único de notificación utilizando el hashCode del título
+        val notificationId = titulo.hashCode()  // Usar hashCode del título como ID único
+
+        val notificationManager = getSystemService(NotificationManager::class.java)
+
+        val notification = NotificationCompat.Builder(this, "channel_id")
+            .setContentTitle(titulo)
+            .setContentText(mensaje)
+            .setSmallIcon(R.drawable.ic_notification) // Cambia esto por tu ícono
+            .build()
+
+        notificationManager.notify(notificationId, notification)  // Usar el ID único
+    }
+
 }
