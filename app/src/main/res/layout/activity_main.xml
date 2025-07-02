@@ -7,99 +7,12 @@
     android:padding="16dp"
     android:fitsSystemWindows="true">
 
-    <!-- ENCABEZADO -->
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp">
-
-        <TextView
-            android:id="@+id/txtTitulo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Actividades"
-            android:textStyle="bold"
-            android:textSize="22sp"
-            android:textColor="#212121" />
-
-        <ImageButton
-            android:id="@+id/btnNuevaActividad"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/ic_add"
-            android:background="@drawable/btn_circular"
-            android:scaleType="fitCenter"
-            android:padding="12dp"
-            android:contentDescription="Crear nueva actividad"
-            android:elevation="6dp"
-            android:layout_alignParentEnd="true"
-            android:layout_marginEnd="4dp"
-            android:layout_marginTop="4dp" />
-    </RelativeLayout>
-
-    <!-- FILTROS -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginBottom="12dp">
-
-        <Button
-            android:id="@+id/btnTodas"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Todas" />
-
-
-        <Button
-            android:id="@+id/btnPendientes"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Pendientes"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/btn_filtro_activo"
-            android:layout_margin="6dp"
-            android:paddingVertical="8dp" />
-
-        <Button
-            android:id="@+id/btnVencidas"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Vencida"
-            android:textColor="#000000"
-            android:background="@drawable/btn_filtro_inactivo"
-            android:layout_margin="6dp"
-            android:paddingVertical="8dp" />
-
-        <Button
-            android:id="@+id/btnCompletadas"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Completado"
-            android:textColor="#000000"
-            android:textSize="13sp"
-            android:background="@drawable/btn_filtro_inactivo"
-            android:layout_margin="6dp"
-            android:paddingVertical="8dp" />
-    </LinearLayout>
-
-
-    <!-- CONTENIDO -->
-    <ScrollView
+    <FrameLayout
+        android:id="@+id/contenedorFragmentos"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"/>
 
-        <LinearLayout
-            android:id="@+id/contenedorActividades"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
 
     <!-- NAVBAR -->
     <LinearLayout
@@ -110,12 +23,14 @@
         android:background="#F5F5F5">
 
         <ImageView
+            android:id="@+id/btnInicio"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_weight="1"
             android:layout_gravity="center"
             android:src="@drawable/ic_home"
             android:contentDescription="Inicio" />
+
 
         <ImageView
             android:id="@+id/btnBuscar"
@@ -127,6 +42,7 @@
             android:contentDescription="Buscar" />
 
         <ImageView
+            android:id="@+id/btnCalendario"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_weight="1"
@@ -135,14 +51,16 @@
             android:contentDescription="Calendario" />
 
         <ImageView
+            android:id="@+id/btnNotificaciones"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_weight="1"
             android:layout_gravity="center"
-            android:src="@drawable/ic_notifications"
+            android:src="@drawable/ic_notification"
             android:contentDescription="Notificaciones" />
 
         <ImageView
+            android:id="@+id/btnPerfil"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_weight="1"

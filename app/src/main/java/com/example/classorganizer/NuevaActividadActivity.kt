@@ -8,10 +8,14 @@ import android.widget.EditText
 import android.widget.Toast
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.ContentValues
+
 import java.text.SimpleDateFormat
 import java.util.*
 
 class NuevaActividadActivity : Activity() {
+
+    private var idActividad: Int? = null
 
     private lateinit var etTitulo: EditText
     private lateinit var etDescripcion: EditText
@@ -39,7 +43,18 @@ class NuevaActividadActivity : Activity() {
             mostrarDateTimePicker()
         }
 
-        // Botón para guardar la actividad
+        // Verificar si hay datos para edición
+        idActividad = intent.getIntExtra("id", -1).takeIf { it != -1 }
+        val tituloEdit = intent.getStringExtra("titulo")
+        val descripcionEdit = intent.getStringExtra("descripcion")
+        val fechaEdit = intent.getStringExtra("fechaHora")
+
+        if (idActividad != null) {
+            etTitulo.setText(tituloEdit)
+            etDescripcion.setText(descripcionEdit)
+            etFecha.setText(fechaEdit)
+        }
+
         btnGuardar.setOnClickListener {
             val titulo = etTitulo.text.toString().trim()
             val descripcion = etDescripcion.text.toString().trim()
@@ -50,27 +65,37 @@ class NuevaActividadActivity : Activity() {
                 return@setOnClickListener
             }
 
-            // Guardar la actividad en SharedPreferences
-            val sharedPreferences = getSharedPreferences("actividades", MODE_PRIVATE)
-            val editor = sharedPreferences.edit()
+            val dbHelper = AdminSQLite(this)
+            val db = dbHelper.writableDatabase
 
-            // Usamos el título como clave única para cada actividad
-            val actividad = "$titulo|$descripcion|$fecha"
-            val lista = sharedPreferences.getStringSet("lista", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-            lista.add(actividad)
+            val values = ContentValues().apply {
+                put("titulo", titulo)
+                put("descripcion", descripcion)
+                put("fechaHora", fecha)
+                put("completada", 0) // o mantén el valor si quieres
+            }
 
-            editor.putStringSet("lista", lista)
-            editor.apply()
+            val success = if (idActividad != null) {
+                // Actualizar
+                db.update("actividades", values, "id=?", arrayOf(idActividad.toString())) > 0
+            } else {
+                // Insertar
+                db.insert("actividades", null, values) != -1L
+            }
+            db.close()
 
-            // Enviar los datos de vuelta a MainActivity
-            val intent = Intent()
-            intent.putExtra("titulo", titulo)
-            intent.putExtra("descripcion", descripcion)
-            intent.putExtra("fecha", fecha)
+            if (success) {
+                Toast.makeText(this, "Actividad guardada", Toast.LENGTH_SHORT).show()
+                setResult(Activity.RESULT_OK)
+                finish()
+            } else {
+                Toast.makeText(this, "Error al guardar en la base de datos", Toast.LENGTH_SHORT).show()
+            }
 
-            setResult(RESULT_OK, intent)
+            // Terminar y regresar a la pantalla principal
             finish()
         }
+
 
         // Botón para regresar sin guardar
         btnVolver.setOnClickListener {

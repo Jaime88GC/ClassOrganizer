@@ -1,30 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/layoutBuscar"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#F0F2F5"
-    android:fitsSystemWindows="true">
+    android:background="#FFFFFF">
 
-
-
-    <!-- Campo de búsqueda con fondo y padding bonito -->
     <EditText
         android:id="@+id/campoBusqueda"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="🔍 Buscar actividad..."
+        android:hint="Buscar actividad"
         android:inputType="text"
+        android:textColor="#000000"
         android:padding="12dp"
         android:background="@drawable/bg_edittext_rounded"
-        android:textColor="#000000"
-        android:textColorHint="#888888"
-        android:elevation="2dp"
+        android:textSize="16sp"
         android:layout_marginBottom="16dp" />
 
-    <!-- Contenedor de resultados -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -36,4 +29,5 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" />
     </ScrollView>
+
 </LinearLayout>

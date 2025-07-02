@@ -1,33 +1,39 @@
 package com.example.classorganizer
 
-import android.app.Activity
 import android.app.AlertDialog
+import android.database.Cursor
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.fragment.app.Fragment
 import java.text.SimpleDateFormat
 import java.util.*
 
-class BuscarActividadActivity : Activity() {
+class BuscarFragment : Fragment() {
 
     private lateinit var campoBusqueda: EditText
     private lateinit var contenedorResultados: LinearLayout
-    private var actividades: List<String> = listOf()
+    private lateinit var dbHelper: AdminSQLite
+    private var actividades = mutableListOf<Actividad>()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_buscar_actividad)
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        val view = inflater.inflate(R.layout.fragment_buscar, container, false)
 
-        campoBusqueda = findViewById(R.id.campoBusqueda)
-        contenedorResultados = findViewById(R.id.contenedorResultados)
+        campoBusqueda = view.findViewById(R.id.campoBusqueda)
+        contenedorResultados = view.findViewById(R.id.contenedorResultados)
+        dbHelper = AdminSQLite(requireContext())
 
-        val prefs = getSharedPreferences("actividades", MODE_PRIVATE)
-        actividades = prefs.getStringSet("lista", setOf())?.toList() ?: listOf()
-
+        cargarActividadesDesdeDB()
         mostrarResultadosFiltrados("")
 
         campoBusqueda.addTextChangedListener(object : TextWatcher {
@@ -38,34 +44,50 @@ class BuscarActividadActivity : Activity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
+
+        return view
+    }
+
+    private fun cargarActividadesDesdeDB() {
+        val db = dbHelper.readableDatabase
+        val cursor: Cursor = db.rawQuery("SELECT * FROM actividades", null)
+        actividades.clear()
+
+        if (cursor.moveToFirst()) {
+            do {
+                val id = cursor.getInt(cursor.getColumnIndexOrThrow("id"))
+                val titulo = cursor.getString(cursor.getColumnIndexOrThrow("titulo"))
+                val descripcion = cursor.getString(cursor.getColumnIndexOrThrow("descripcion"))
+                val fecha = cursor.getString(cursor.getColumnIndexOrThrow("fechaHora"))
+                val completada = cursor.getInt(cursor.getColumnIndexOrThrow("completada")) == 1
+                actividades.add(Actividad(id, titulo, descripcion, fecha, completada))
+            } while (cursor.moveToNext())
+        }
+
+        cursor.close()
+        db.close()
     }
 
     private fun mostrarResultadosFiltrados(filtro: String) {
         contenedorResultados.removeAllViews()
 
         val resultados = actividades.filter {
-            it.lowercase().contains(filtro.lowercase())
+            it.titulo.contains(filtro, ignoreCase = true) ||
+                    it.descripcion.contains(filtro, ignoreCase = true)
         }
 
         if (resultados.isEmpty()) {
-            val sinResultado = TextView(this).apply {
+            val sinResultado = TextView(requireContext()).apply {
                 text = "No se encontraron actividades."
                 setTextColor(Color.DKGRAY)
                 textSize = 16f
             }
             contenedorResultados.addView(sinResultado)
         } else {
-            for (actividad in resultados) {
-                val partes = actividad.split("|")
-                if (partes.size != 3) continue
+            for (act in resultados) {
+                val colorFondo = calcularColorPorFecha(act.fechaHora, act.completada)
 
-                val titulo = partes[0]
-                val descripcion = partes[1]
-                val fechaHora = partes[2]
-
-                val colorFondo = calcularColorPorFecha(fechaHora)
-
-                val contenedor = LinearLayout(this).apply {
+                val contenedor = LinearLayout(requireContext()).apply {
                     orientation = LinearLayout.HORIZONTAL
                     setBackgroundColor(colorFondo)
                     setPadding(16, 16, 16, 16)
@@ -77,25 +99,24 @@ class BuscarActividadActivity : Activity() {
                     layoutParams = params
                 }
 
-                val texto = TextView(this).apply {
-                    text = "📌 $titulo\n$descripcion\n📅 $fechaHora"
+                val texto = TextView(requireContext()).apply {
+                    text = "\uD83D\uDCCC ${act.titulo}\n${act.descripcion}\n\uD83D\uDCC5 ${act.fechaHora}"
                     setTextColor(Color.BLACK)
                     textSize = 16f
                     layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
                 }
 
-                val botonEliminar = TextView(this).apply {
+                val botonEliminar = TextView(requireContext()).apply {
                     text = "❌"
                     textSize = 18f
                     setTextColor(Color.RED)
                     setOnClickListener {
-                        AlertDialog.Builder(this@BuscarActividadActivity)
+                        AlertDialog.Builder(requireContext())
                             .setTitle("¿Eliminar actividad?")
                             .setMessage("¿Estás seguro de que deseas eliminar esta actividad?")
                             .setPositiveButton("Sí") { _, _ ->
-                                contenedorResultados.removeView(contenedor)
-                                eliminarActividadDeMemoria(titulo, descripcion, fechaHora)
-                                actividades = actividades.filterNot { it == "$titulo|$descripcion|$fechaHora" }
+                                eliminarActividadDeDB(act.id)
+                                cargarActividadesDesdeDB()
                                 mostrarResultadosFiltrados(campoBusqueda.text.toString())
                             }
                             .setNegativeButton("Cancelar", null)
@@ -110,16 +131,15 @@ class BuscarActividadActivity : Activity() {
         }
     }
 
-    private fun calcularColorPorFecha(fechaHoraStr: String): Int {
+    private fun calcularColorPorFecha(fechaHoraStr: String, completada: Boolean): Int {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
-        formato.timeZone = TimeZone.getDefault()
         val ahora = Date()
 
         return try {
             val fechaActividad = formato.parse(fechaHoraStr)
             val diferencia = fechaActividad.time - ahora.time
-
             when {
+                completada -> Color.parseColor("#B0BEC5")
                 diferencia <= 0 -> Color.parseColor("#EF9A9A")
                 diferencia <= 2 * 60 * 60 * 1000 -> Color.parseColor("#FFF59D")
                 else -> Color.parseColor("#A5D6A7")
@@ -130,11 +150,9 @@ class BuscarActividadActivity : Activity() {
         }
     }
 
-    private fun eliminarActividadDeMemoria(titulo: String, descripcion: String, fechaHora: String) {
-        val actividad = "$titulo|$descripcion|$fechaHora"
-        val prefs = getSharedPreferences("actividades", MODE_PRIVATE)
-        val lista = prefs.getStringSet("lista", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
-        lista.remove(actividad)
-        prefs.edit().putStringSet("lista", lista).apply()
+    private fun eliminarActividadDeDB(id: Int) {
+        val db = dbHelper.writableDatabase
+        db.delete("actividades", "id=?", arrayOf(id.toString()))
+        db.close()
     }
 }
