@@ -102,10 +102,24 @@ class InicioFragment : Fragment() {
 
     private fun mostrarActividades(lista: List<Actividad>) {
         contenedorActividades.removeAllViews()
+
+        if (lista.isEmpty()) {
+            val mensajeVacio = TextView(requireContext()).apply {
+                text = "No hay tareas"
+                textSize = 18f
+                setTextColor(Color.GRAY)
+                setPadding(16, 16, 16, 16)
+                gravity = android.view.Gravity.CENTER
+            }
+            contenedorActividades.addView(mensajeVacio)
+            return
+        }
+
         for (actividad in lista) {
             agregarActividadEnPantalla(actividad)
         }
     }
+
 
     private fun agregarActividadEnPantalla(act: Actividad) {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())

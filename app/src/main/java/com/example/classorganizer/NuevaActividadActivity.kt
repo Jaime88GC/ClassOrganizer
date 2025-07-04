@@ -2,6 +2,7 @@ package com.example.classorganizer
 
 import android.app.Activity
 import android.content.Intent
+import android.content.Context
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
@@ -72,7 +73,7 @@ class NuevaActividadActivity : Activity() {
                 put("titulo", titulo)
                 put("descripcion", descripcion)
                 put("fechaHora", fecha)
-                put("completada", 0) // o mantén el valor si quieres
+                put("completada", 0)
             }
 
             val success = if (idActividad != null) {
@@ -80,7 +81,19 @@ class NuevaActividadActivity : Activity() {
                 db.update("actividades", values, "id=?", arrayOf(idActividad.toString())) > 0
             } else {
                 // Insertar
-                db.insert("actividades", null, values) != -1L
+                val idNuevo = db.insert("actividades", null, values)
+                if (idNuevo != -1L) {
+                    // Insertar notificación de nueva actividad en la base de datos
+                    val mensajeNotificacion = "Nueva actividad agregada: $titulo"
+                    val fechaHoraActual = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
+                    dbHelper.insertarNotificacion(mensajeNotificacion, fechaHoraActual)
+
+                    // Mostrar notificación en barra
+                    mostrarNotificacion(mensajeNotificacion)
+                    true
+                } else {
+                    false
+                }
             }
             db.close()
 
@@ -91,10 +104,8 @@ class NuevaActividadActivity : Activity() {
             } else {
                 Toast.makeText(this, "Error al guardar en la base de datos", Toast.LENGTH_SHORT).show()
             }
-
-            // Terminar y regresar a la pantalla principal
-            finish()
         }
+
 
 
         // Botón para regresar sin guardar
@@ -129,4 +140,28 @@ class NuevaActividadActivity : Activity() {
 
         datePicker.show()
     }
+
+    private fun mostrarNotificacion(mensaje: String) {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        val channelId = "notificaciones_canal"
+
+        // Crear canal para Android 8+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(
+                channelId,
+                "Notificaciones",
+                android.app.NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val builder = androidx.core.app.NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_notification) // pon tu icono de notificación aquí
+            .setContentTitle("Class Organizer")
+            .setContentText(mensaje)
+            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_DEFAULT)
+
+        notificationManager.notify(1, builder.build())
+    }
+
 }

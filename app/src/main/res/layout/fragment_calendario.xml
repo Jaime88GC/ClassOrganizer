@@ -7,15 +7,26 @@
     android:padding="16dp"
     android:background="#FFFFFF">
 
+    <Button
+        android:id="@+id/btnExportar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Exportar PDF" />
+
+
     <CalendarView
         android:id="@+id/calendarView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
+        android:background="@color/colorFondo"
         android:focusedMonthDateColor="#000000"
-        android:selectedWeekBackgroundColor="#C5CAE9"
         android:unfocusedMonthDateColor="#888888"
+        android:weekDayTextAppearance="@style/WeekDayText"
+        android:dateTextAppearance="@style/DateText"
+        android:selectedWeekBackgroundColor="#C5CAE9"
         android:weekSeparatorLineColor="#3F51B5" />
+
 
     <ScrollView
         android:layout_width="match_parent"
