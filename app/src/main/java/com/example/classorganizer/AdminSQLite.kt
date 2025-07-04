@@ -4,12 +4,13 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import java.text.SimpleDateFormat
+import java.util.*
 
 class AdminSQLite(context: Context) :
-    SQLiteOpenHelper(context, "db_actividades", null, 2) {
+    SQLiteOpenHelper(context, "db_actividades", null, 3) {
 
     override fun onCreate(db: SQLiteDatabase?) {
-        // Tabla actividades
         db?.execSQL(
             """
                 CREATE TABLE actividades (
@@ -22,7 +23,6 @@ class AdminSQLite(context: Context) :
             """.trimIndent()
         )
 
-        // Tabla notificaciones
         db?.execSQL(
             """
                 CREATE TABLE notificaciones (
@@ -40,19 +40,22 @@ class AdminSQLite(context: Context) :
         onCreate(db)
     }
 
-    // Insertar notificación
-    fun insertarNotificacion(mensaje: String, fechaHora: String): Long {
+    /**
+     * Inserta una notificación en la base, siempre guardando la hora con segundos.
+     * Formato: dd/MM/yyyy HH:mm:ss
+     */
+    fun insertarNotificacion(mensaje: String): Long {
+        val fechaHoraActual = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(Date())
         val db = writableDatabase
         val values = ContentValues().apply {
             put("mensaje", mensaje)
-            put("fechaHora", fechaHora)
+            put("fechaHora", fechaHoraActual)
         }
         val id = db.insert("notificaciones", null, values)
         db.close()
         return id
     }
 
-    // Obtener todas las notificaciones (id, mensaje, fechaHora)
     fun obtenerNotificaciones(): List<Triple<Int, String, String>> {
         val lista = mutableListOf<Triple<Int, String, String>>()
         val db = readableDatabase
@@ -67,19 +70,15 @@ class AdminSQLite(context: Context) :
         return lista
     }
 
-
-    // Borrar todas las notificaciones
     fun borrarTodasLasNotificaciones() {
         val db = writableDatabase
         db.delete("notificaciones", null, null)
         db.close()
     }
 
-    // Borrar una notificación por ID
     fun borrarNotificacionPorId(id: Int) {
         val db = writableDatabase
         db.delete("notificaciones", "id = ?", arrayOf(id.toString()))
         db.close()
     }
-
 }

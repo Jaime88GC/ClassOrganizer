@@ -26,7 +26,7 @@ class NotificacionesFragment : Fragment() {
         dbHelper = AdminSQLite(requireContext())
         val notificaciones = dbHelper.obtenerNotificaciones().toMutableList()
 
-        val formatoFecha = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
+        val formatoFecha = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss", java.util.Locale.getDefault())
 
         // Ordenar por fecha DESCENDENTE (más reciente primero)
         notificaciones.sortByDescending {

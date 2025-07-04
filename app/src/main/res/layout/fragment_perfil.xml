@@ -2,7 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
+    android:background="#E6E2E2"
     android:padding="24dp">
 
     <LinearLayout
@@ -11,47 +11,208 @@
         android:orientation="vertical"
         android:gravity="center_horizontal">
 
+        <!-- Mensaje de bienvenida -->
+        <TextView
+            android:id="@+id/tvBienvenida"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Class Organizer"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#1565C0"
+            android:letterSpacing="0.05"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="5dp" />
+
+        <!-- Card Perfil -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="28dp"
+            android:layout_marginTop="8dp"
             android:padding="24dp"
-            android:backgroundTint="#FFFFFF">
+            android:backgroundTint="#FFFFFF"
+            android:elevation="12dp"
+            android:radius="20dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:gravity="center_horizontal">
+                android:gravity="center_horizontal"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tvPerfil"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="PERFIL"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:textColor="#002562"
+                    android:layout_marginBottom="16dp"/>
 
                 <ImageView
                     android:id="@+id/ivFotoPerfil"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_marginBottom="16dp"
-                    android:src="@drawable/ic_profile"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:layout_marginBottom="20dp"
+                    android:src="@drawable/usuario"
                     android:scaleType="centerCrop"
-                    android:background="@drawable/circle"
-                    android:padding="4dp" />
+                    android:elevation="6dp" />
 
                 <TextView
                     android:id="@+id/tvNombre"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Usuario"
-                    android:textSize="20sp"
+                    android:textSize="24sp"
                     android:textStyle="bold"
-                    android:textColor="#333333" />
+                    android:textColor="#212121"
+                    android:layout_marginBottom="6dp"/>
+
+                <TextView
+                    android:id="@+id/tvSlogan"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Organiza tu tiempo, alcanza tus metas"
+                    android:textSize="15sp"
+                    android:textColor="#616161"
+                    android:layout_marginBottom="14dp"/>
 
                 <TextView
                     android:id="@+id/tvCorreo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Correo@gmail.com"
-                    android:textSize="16sp"
-                    android:textColor="#666666"
-                    android:layout_marginTop="4dp" />
+                    android:text="correo@gmail.com"
+                    android:textSize="17sp"
+                    android:textColor="#424242"/>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Card de estadísticas -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:padding="20dp"
+            android:backgroundTint="#FFFFFF"
+            android:elevation="10dp"
+            android:radius="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Resumen de Tareas"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#212121"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Item Tareas Pendientes -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📋"
+                        android:textSize="22sp"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/tvTareasPendientes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tareas pendientes: 0"
+                        android:textSize="17sp"
+                        android:textColor="#F57C00" />
+                </LinearLayout>
+
+                <!-- Item Tareas Completadas -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="✅"
+                        android:textSize="22sp"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/tvTareasCompletadas"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tareas completadas: 0"
+                        android:textSize="17sp"
+                        android:textColor="#388E3C" />
+                </LinearLayout>
+
+                <!-- Item Tareas Vencidas -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="⏰"
+                        android:textSize="22sp"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/tvTareasVencidas"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tareas vencidas: 0"
+                        android:textSize="17sp"
+                        android:textColor="#D32F2F" />
+                </LinearLayout>
+
+                <!-- Item Total de tareas -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📊"
+                        android:textSize="22sp"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:id="@+id/tvTareasTotales"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Total de tareas: 0"
+                        android:textSize="17sp"
+                        android:textColor="#455A64" />
+                </LinearLayout>
+
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -60,9 +221,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Cerrar Sesión"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textColor="#FFFFFF"
-            android:backgroundTint="#D32F2F"
-            android:padding="12dp"/>
+            android:backgroundTint="#C62828"
+            android:padding="14dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"/>
+
     </LinearLayout>
 </ScrollView>

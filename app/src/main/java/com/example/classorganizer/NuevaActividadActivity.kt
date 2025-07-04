@@ -11,7 +11,6 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.ContentValues
 
-import java.text.SimpleDateFormat
 import java.util.*
 
 class NuevaActividadActivity : Activity() {
@@ -83,10 +82,9 @@ class NuevaActividadActivity : Activity() {
                 // Insertar
                 val idNuevo = db.insert("actividades", null, values)
                 if (idNuevo != -1L) {
-                    // Insertar notificación de nueva actividad en la base de datos
+                    // Insertar notificación de nueva actividad en la base de datos (con segundos)
                     val mensajeNotificacion = "Nueva actividad agregada: $titulo"
-                    val fechaHoraActual = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
-                    dbHelper.insertarNotificacion(mensajeNotificacion, fechaHoraActual)
+                    dbHelper.insertarNotificacion(mensajeNotificacion)
 
                     // Mostrar notificación en barra
                     mostrarNotificacion(mensajeNotificacion)
@@ -99,14 +97,16 @@ class NuevaActividadActivity : Activity() {
 
             if (success) {
                 Toast.makeText(this, "Actividad guardada", Toast.LENGTH_SHORT).show()
-                setResult(Activity.RESULT_OK)
+                val intent = Intent()
+                intent.putExtra("accion", if (idActividad != null) "modificada" else "agregada")
+                intent.putExtra("titulo", etTitulo.text.toString().trim())
+                setResult(Activity.RESULT_OK, intent)
                 finish()
+
             } else {
                 Toast.makeText(this, "Error al guardar en la base de datos", Toast.LENGTH_SHORT).show()
             }
         }
-
-
 
         // Botón para regresar sin guardar
         btnVolver.setOnClickListener {
@@ -117,9 +117,7 @@ class NuevaActividadActivity : Activity() {
     private fun mostrarDateTimePicker() {
         val calendar = Calendar.getInstance()
 
-        // DatePicker primero
         val datePicker = DatePickerDialog(this, { _, year, month, dayOfMonth ->
-            // Después de la fecha, lanza el TimePicker
             val timePicker = TimePickerDialog(this, { _, hourOfDay, minute ->
                 val fechaFormateada = String.format(
                     "%02d/%02d/%04d %02d:%02d",
@@ -145,7 +143,6 @@ class NuevaActividadActivity : Activity() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
         val channelId = "notificaciones_canal"
 
-        // Crear canal para Android 8+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val channel = android.app.NotificationChannel(
                 channelId,
@@ -156,12 +153,11 @@ class NuevaActividadActivity : Activity() {
         }
 
         val builder = androidx.core.app.NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_notification) // pon tu icono de notificación aquí
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("Class Organizer")
             .setContentText(mensaje)
             .setPriority(androidx.core.app.NotificationCompat.PRIORITY_DEFAULT)
 
         notificationManager.notify(1, builder.build())
     }
-
 }

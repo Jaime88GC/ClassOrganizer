@@ -1,46 +1,112 @@
 package com.example.classorganizer
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.*
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.TextView
+import android.widget.*
 import androidx.fragment.app.Fragment
-import android.widget.Toast
+import com.example.classorganizer.databinding.FragmentPerfilBinding
+import java.util.*
 
 class PerfilFragment : Fragment() {
 
-    private lateinit var ivFotoPerfil: ImageView
-    private lateinit var tvNombre: TextView
-    private lateinit var tvCorreo: TextView
-    private lateinit var btnCerrarSesion: Button
+    private var _binding: FragmentPerfilBinding? = null
+    private val binding get() = _binding!!
+
+    private lateinit var dbHelper: AdminSQLite
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val view = inflater.inflate(R.layout.fragment_perfil, container, false)
+        _binding = FragmentPerfilBinding.inflate(inflater, container, false)
+        val view = binding.root
 
-        ivFotoPerfil = view.findViewById(R.id.ivFotoPerfil)
-        tvNombre = view.findViewById(R.id.tvNombre)
-        tvCorreo = view.findViewById(R.id.tvCorreo)
-        btnCerrarSesion = view.findViewById(R.id.btnCerrarSesion)
+        dbHelper = AdminSQLite(requireContext())
 
-        // Datos del usuario
+        // Datos del usuario desde preferencias
         val prefs = requireContext().getSharedPreferences("usuario", 0)
         val nombre = prefs.getString("nombre", "Estudiante")
         val correo = prefs.getString("correo", "estudiante@example.com")
 
-        tvNombre.text = nombre
-        tvCorreo.text = correo
+        binding.tvNombre.text = nombre
+        binding.tvCorreo.text = correo
 
-        btnCerrarSesion.setOnClickListener {
+        // Cargar estadísticas
+        cargarEstadisticas()
+
+        binding.btnCerrarSesion.setOnClickListener {
             Toast.makeText(requireContext(), "Sesión cerrada", Toast.LENGTH_SHORT).show()
-            requireActivity().finishAffinity() // Cierra la app completamente
+            requireActivity().finishAffinity()
         }
 
-
         return view
+    }
+
+    private fun cargarEstadisticas() {
+        val db = dbHelper.readableDatabase
+        val cursor = db.rawQuery("SELECT completada, fechaHora FROM actividades", null)
+
+        var pendientes = 0
+        var completadas = 0
+        var vencidas = 0
+        var totales = 0
+
+        val ahora = Date()
+
+        if (cursor.moveToFirst()) {
+            do {
+                val completada = cursor.getInt(0) == 1
+                val fechaHora = cursor.getString(1)
+                totales++
+
+                val fecha = parseFechaFlexible(fechaHora)
+
+                if (completada) {
+                    completadas++
+                    android.util.Log.d("PerfilFragment", "Completada: $fechaHora ✅")
+                } else if (fecha == null) {
+                    pendientes++
+                    android.util.Log.w("PerfilFragment", "Fecha nula o malformada: $fechaHora 🤷")
+                } else if (fecha.before(ahora)) {
+                    vencidas++
+                    android.util.Log.d("PerfilFragment", "Vencida: $fechaHora ⏰")
+                } else {
+                    pendientes++
+                    android.util.Log.d("PerfilFragment", "Pendiente: $fechaHora 📝")
+                }
+
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        db.close()
+
+        binding.tvTareasPendientes.text = "Tareas pendientes: $pendientes"
+        binding.tvTareasCompletadas.text = "Tareas completadas: $completadas"
+        binding.tvTareasVencidas.text = "Tareas vencidas: $vencidas"
+        binding.tvTareasTotales.text = "Total de tareas: $totales"
+    }
+
+    /**
+     * Intenta parsear la fecha con segundos o sin segundos.
+     */
+    private fun parseFechaFlexible(fechaHora: String): Date? {
+        val formatos = listOf(
+            "dd/MM/yyyy HH:mm:ss",
+            "dd/MM/yyyy HH:mm"
+        )
+        for (formato in formatos) {
+            try {
+                val sdf = java.text.SimpleDateFormat(formato, Locale.getDefault())
+                return sdf.parse(fechaHora)
+            } catch (_: Exception) {
+                // Intenta siguiente formato
+            }
+        }
+        return null
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

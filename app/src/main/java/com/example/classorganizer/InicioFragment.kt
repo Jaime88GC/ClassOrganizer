@@ -13,6 +13,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import java.text.SimpleDateFormat
 import java.util.*
+import android.app.NotificationManager
+import android.app.NotificationChannel
+import androidx.core.app.NotificationCompat
 
 class InicioFragment : Fragment() {
 
@@ -20,11 +23,24 @@ class InicioFragment : Fragment() {
     private lateinit var dbHelper: AdminSQLite
     private var actividadesEnMemoria = mutableListOf<Actividad>()
 
+    private lateinit var btnTodas: Button
+    private lateinit var btnPendientes: Button
+    private lateinit var btnVencidas: Button
+    private lateinit var btnCompletadas: Button
+    private lateinit var listaBotones: List<Button>
+
+    private var filtroActual: (List<Actividad>) -> List<Actividad> = { it }
+
     private val nuevaActividadLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val accion = result.data?.getStringExtra("accion") ?: ""
+            val titulo = result.data?.getStringExtra("titulo") ?: ""
             cargarActividadesDesdeDB()
+            if (accion.isNotEmpty() && titulo.isNotEmpty() && accion != "agregada") {
+                registrarNotificacion("Actividad '$titulo' $accion correctamente.")
+            }
         }
     }
 
@@ -37,32 +53,33 @@ class InicioFragment : Fragment() {
         contenedorActividades = view.findViewById(R.id.contenedorActividades)
         dbHelper = AdminSQLite(requireContext())
 
-        val btnTodas = view.findViewById<Button>(R.id.btnTodas)
-        val btnPendientes = view.findViewById<Button>(R.id.btnPendientes)
-        val btnVencidas = view.findViewById<Button>(R.id.btnVencidas)
-        val btnCompletadas = view.findViewById<Button>(R.id.btnCompletadas)
-        val listaBotones = listOf(btnTodas, btnPendientes, btnVencidas, btnCompletadas)
+        btnTodas = view.findViewById(R.id.btnTodas)
+        btnPendientes = view.findViewById(R.id.btnPendientes)
+        btnVencidas = view.findViewById(R.id.btnVencidas)
+        btnCompletadas = view.findViewById(R.id.btnCompletadas)
+        listaBotones = listOf(btnTodas, btnPendientes, btnVencidas, btnCompletadas)
 
         btnTodas.setOnClickListener {
-            mostrarActividades(actividadesEnMemoria)
+            filtroActual = { it }
+            mostrarActividades(filtroActual(actividadesEnMemoria))
             actualizarEstiloBotonesFiltro(btnTodas, listaBotones)
         }
 
         btnPendientes.setOnClickListener {
-            val pendientes = actividadesEnMemoria.filter { !it.completada && !esVencida(it.fechaHora) }
-            mostrarActividades(pendientes)
+            filtroActual = { it.filter { a -> !a.completada && !esVencida(a.fechaHora) } }
+            mostrarActividades(filtroActual(actividadesEnMemoria))
             actualizarEstiloBotonesFiltro(btnPendientes, listaBotones)
         }
 
         btnVencidas.setOnClickListener {
-            val vencidas = actividadesEnMemoria.filter { !it.completada && esVencida(it.fechaHora) }
-            mostrarActividades(vencidas)
+            filtroActual = { it.filter { a -> !a.completada && esVencida(a.fechaHora) } }
+            mostrarActividades(filtroActual(actividadesEnMemoria))
             actualizarEstiloBotonesFiltro(btnVencidas, listaBotones)
         }
 
         btnCompletadas.setOnClickListener {
-            val completadas = actividadesEnMemoria.filter { it.completada }
-            mostrarActividades(completadas)
+            filtroActual = { it.filter { a -> a.completada } }
+            mostrarActividades(filtroActual(actividadesEnMemoria))
             actualizarEstiloBotonesFiltro(btnCompletadas, listaBotones)
         }
 
@@ -72,6 +89,7 @@ class InicioFragment : Fragment() {
             nuevaActividadLauncher.launch(intent)
         }
 
+        filtroActual = { it } // por defecto mostrar todas
         cargarActividadesDesdeDB()
         actualizarEstiloBotonesFiltro(btnTodas, listaBotones)
 
@@ -97,7 +115,7 @@ class InicioFragment : Fragment() {
         cursor.close()
         db.close()
 
-        mostrarActividades(actividadesEnMemoria)
+        mostrarActividades(filtroActual(actividadesEnMemoria))
     }
 
     private fun mostrarActividades(lista: List<Actividad>) {
@@ -107,7 +125,7 @@ class InicioFragment : Fragment() {
             val mensajeVacio = TextView(requireContext()).apply {
                 text = "No hay tareas"
                 textSize = 18f
-                setTextColor(Color.GRAY)
+                setTextColor(Color.BLACK)
                 setPadding(16, 16, 16, 16)
                 gravity = android.view.Gravity.CENTER
             }
@@ -119,7 +137,6 @@ class InicioFragment : Fragment() {
             agregarActividadEnPantalla(actividad)
         }
     }
-
 
     private fun agregarActividadEnPantalla(act: Actividad) {
         val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -159,6 +176,8 @@ class InicioFragment : Fragment() {
             setOnClickListener {
                 val nueva = act.copy(completada = !act.completada)
                 actualizarActividad(nueva)
+                val estado = if (nueva.completada) "completada" else "marcada como pendiente"
+                registrarNotificacion("Actividad '${nueva.titulo}' $estado.")
                 cargarActividadesDesdeDB()
             }
         }
@@ -173,6 +192,7 @@ class InicioFragment : Fragment() {
                     .setMessage("¿Seguro que quieres eliminar '${act.titulo}'?")
                     .setPositiveButton("Sí") { _, _ ->
                         eliminarActividad(act.id)
+                        registrarNotificacion("Actividad '${act.titulo}' eliminada.")
                         cargarActividadesDesdeDB()
                     }
                     .setNegativeButton("Cancelar", null)
@@ -195,12 +215,10 @@ class InicioFragment : Fragment() {
             }
         }
 
-
         contenedor.addView(texto)
         contenedor.addView(btnCheck)
         contenedor.addView(btnEditar)
         contenedor.addView(btnDelete)
-
 
         contenedorActividades.addView(contenedor)
     }
@@ -223,6 +241,33 @@ class InicioFragment : Fragment() {
         db.close()
     }
 
+    private fun registrarNotificacion(mensaje: String) {
+        dbHelper.insertarNotificacion(mensaje)
+        mostrarNotificacion(mensaje)
+    }
+
+    private fun mostrarNotificacion(mensaje: String) {
+        val notificationManager = requireContext().getSystemService(NotificationManager::class.java)
+        val channelId = "notificaciones_canal"
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Notificaciones",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val builder = NotificationCompat.Builder(requireContext(), channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Class Organizer")
+            .setContentText(mensaje)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+
+        notificationManager.notify(Random().nextInt(), builder.build())
+    }
+
     private fun esVencida(fechaStr: String): Boolean {
         return try {
             val formato = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -236,12 +281,15 @@ class InicioFragment : Fragment() {
     private fun actualizarEstiloBotonesFiltro(botonActivo: Button, botones: List<Button>) {
         botones.forEach { boton ->
             if (boton == botonActivo) {
-                boton.setBackgroundColor(Color.parseColor("#2196F3"))
+                boton.setBackgroundColor(Color.parseColor("#2196F3")) // azul seleccionado
                 boton.setTextColor(Color.WHITE)
             } else {
-                boton.setBackgroundColor(Color.parseColor("#DDDDDD"))
+                boton.setBackgroundColor(Color.WHITE) // blanco para no seleccionados
                 boton.setTextColor(Color.BLACK)
             }
         }
     }
 }
+
+
+
